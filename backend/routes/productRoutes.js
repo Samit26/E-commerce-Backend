@@ -66,6 +66,38 @@ const updateProductStats = async (productId, action) => {
   }
 };
 
+
+router.get("/all", async (req, res) => {
+  console.log("sending 10 datas...");
+  try {
+    const products = await Product.aggregate([{ $sample: { size: 10 } }]);
+    res.send(products);
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res.status(500).json({ message: "Server error while searching" });
+  }
+})
+
+router.get("/search", async (req, res) => {
+  const query = req.query.query;
+
+  try {
+    const products = await Product.find({
+      $or: [
+        { name: { $regex: query, $options: "i" } },
+        { category: { $regex: query, $options: "i" } },
+        { brand: { $regex: query, $options: "i" } }
+      ]
+    });
+
+    console.log(products);
+    res.json({ products });
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res.status(500).json({ message: "Server error while searching" });
+  }
+});
+
 // Create a new product
 router.post("/addProduct", async (req, res) => {
   const product = new Product({
@@ -100,7 +132,16 @@ router.post("/addProduct", async (req, res) => {
 
 router.get("/popular", async (req, res) => {
   try {
-    const popularProducts = await Product.find({ isPopular: true }).limit(4);
+    // const popularProducts = await Product.find({ isPopular: true })
+    //   .sort({ sales: -1 })
+    //   .limit(5);
+    const popularProducts = await Product.aggregate([
+      { $match: { isPopular: true } }, // Filter only popular products
+      { $sort: { sales: -1 } }, // Sort by highest sales first
+      { $limit: 5 }, // Get the top 5
+      { $sample: { size: 5 } } // Randomize order
+    ]);
+
     res.json(popularProducts);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -109,21 +150,19 @@ router.get("/popular", async (req, res) => {
 
 router.get("/trending", async (req, res) => {
   try {
-    const trendingProducts = await Product.find({ isTrending: true }).limit(5);
+    // const trendingProducts = await Product.find()
+    //   .sort({ views: -1 }) // Sort in descending order (higher views first)
+    //   .limit(5);
+
+    const trendingProducts = await Product.aggregate([
+      { $match: { isTrending: true } }, // Filter only popular products
+      { $sort: { views: -1 } }, // Sort by highest sales first
+      { $limit: 5 }, // Get the top 5
+      { $sample: { size: 5 } } // Randomize order
+    ]);
     res.json(trendingProducts);
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-});
-
-router.get("/electronic", async (req, res) => {
-  const electronicProducts = await Product.find({
-    category: "ELECTRONIC",
-  }).limit(5);
-  if (electronicProducts) {
-    res.json(electronicProducts);
-  } else {
-    res.status(404).json({ message: "Product not found" });
   }
 });
 
@@ -138,6 +177,98 @@ router.get("/get/:id", async (req, res) => {
     res.json(product);
   } else {
     res.status(404).json({ message: "Product not found" });
+  }
+});
+
+router.get("/categories", async (req, res) => {
+  try {
+    // Get distinct categories
+    const categories = await Product.distinct("category");
+
+    // Map categories to include an image
+    const categoryData = await Promise.all(
+      categories.map(async (category, index) => {
+        // Find one product from this category
+        const product = await Product.findOne({ category: category });
+
+        return {
+          id: index + 1,
+          name: category,
+          image: product?.images?.[0] || "https://via.placeholder.com/150", // Placeholder if no image found
+        };
+      })
+    );
+
+    res.json(categoryData);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+router.get("/brands", async (req, res) => {
+  try {
+    // Get distinct brands
+    const brands = await Product.distinct("brand");
+
+    // Map brands to include an image
+    const brandsData = await Promise.all(
+      brands.map(async (brand, index) => {
+        // Find one product from this brand
+        const product = await Product.findOne({ brand: brand });
+
+        return {
+          id: index + 1,
+          name: brand,
+          image: product?.images?.[0] || "https://via.placeholder.com/150", // Placeholder if no image found
+        };
+      })
+    );
+
+    res.json(brandsData);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+router.get("/category/:category", async (req, res) => {
+  try {
+    const category = req.params.category;
+
+    // Create a case-insensitive regex pattern to match any word in the category
+    const regex = new RegExp(category.split(" ").join("|"), "i");
+
+    const products = await Product.find({ category: { $regex: regex } })
+      .sort({ views: -1 })
+      .limit(10);
+
+    if (products.length === 0) {
+      return res.status(404).json({ message: "No products found in this category" });
+    }
+
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+router.get("/brand/:brand", async (req, res) => {
+  try {
+    const brand = req.params.brand;
+
+    // Create a case-insensitive regex pattern to match any word in the category
+    const regex = new RegExp(brand.split(" ").join("|"), "i");
+
+    const products = await Product.find({ brand: { $regex: regex } })
+      .sort({ views: -1 })
+      .limit(10);
+
+    if (products.length === 0) {
+      return res.status(404).json({ message: "No products found in this category" });
+    }
+
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
