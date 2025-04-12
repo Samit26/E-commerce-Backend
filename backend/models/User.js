@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   userRecentOrder: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
   keepShoppingFor: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   userCart: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
+  wishList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   password: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });

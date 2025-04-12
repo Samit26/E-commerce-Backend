@@ -66,7 +66,6 @@ const updateProductStats = async (productId, action) => {
   }
 };
 
-
 router.get("/all", async (req, res) => {
   console.log("sending 10 datas...");
   try {
@@ -76,7 +75,7 @@ router.get("/all", async (req, res) => {
     console.error("Error fetching products:", error);
     res.status(500).json({ message: "Server error while searching" });
   }
-})
+});
 
 router.get("/search", async (req, res) => {
   const query = req.query.query;
@@ -86,8 +85,8 @@ router.get("/search", async (req, res) => {
       $or: [
         { name: { $regex: query, $options: "i" } },
         { category: { $regex: query, $options: "i" } },
-        { brand: { $regex: query, $options: "i" } }
-      ]
+        { brand: { $regex: query, $options: "i" } },
+      ],
     });
 
     console.log(products);
@@ -139,7 +138,7 @@ router.get("/popular", async (req, res) => {
       { $match: { isPopular: true } }, // Filter only popular products
       { $sort: { sales: -1 } }, // Sort by highest sales first
       { $limit: 5 }, // Get the top 5
-      { $sample: { size: 5 } } // Randomize order
+      { $sample: { size: 5 } }, // Randomize order
     ]);
 
     res.json(popularProducts);
@@ -158,7 +157,7 @@ router.get("/trending", async (req, res) => {
       { $match: { isTrending: true } }, // Filter only popular products
       { $sort: { views: -1 } }, // Sort by highest sales first
       { $limit: 5 }, // Get the top 5
-      { $sample: { size: 5 } } // Randomize order
+      { $sample: { size: 5 } }, // Randomize order
     ]);
     res.json(trendingProducts);
   } catch (error) {
@@ -242,7 +241,9 @@ router.get("/category/:category", async (req, res) => {
       .limit(10);
 
     if (products.length === 0) {
-      return res.status(404).json({ message: "No products found in this category" });
+      return res
+        .status(404)
+        .json({ message: "No products found in this category" });
     }
 
     res.json(products);
@@ -263,7 +264,9 @@ router.get("/brand/:brand", async (req, res) => {
       .limit(10);
 
     if (products.length === 0) {
-      return res.status(404).json({ message: "No products found in this category" });
+      return res
+        .status(404)
+        .json({ message: "No products found in this category" });
     }
 
     res.json(products);
