@@ -99,9 +99,14 @@ router.get("/search", async (req, res) => {
 
 // Create a new product
 router.post("/addProduct", async (req, res) => {
+  const price = req.body.price;
+  const discountPrice = req.body.discountPrice;
+  const discountPricePercent = Math.round(
+    ((price - discountPrice) / price) * 100
+  );
   const product = new Product({
     name: req.body.name,
-    price: req.body.price,
+    price: price,
     description: req.body.description,
     category: req.body.category,
     brand: req.body.brand,
@@ -109,6 +114,8 @@ router.post("/addProduct", async (req, res) => {
     images: req.body.images,
     sales: req.body.sales,
     views: req.body.views,
+    discountPrice: discountPrice,
+    discountPricePercent: discountPricePercent,
     rating: {
       average: req.body.rating?.average || 0, // Handle undefined case
       ratingCount: req.body.rating?.ratingCount || 0,
@@ -285,7 +292,7 @@ router.get("/userCart", protect, async (req, res) => {
   }
 });
 
-router.get("/userAddToCart/:id", protect, async (req, res) => {
+router.put("/userAddToCart/:id", protect, async (req, res) => {
   const productId = req.params.id;
   const userId = req.user._id;
 
@@ -294,4 +301,79 @@ router.get("/userAddToCart/:id", protect, async (req, res) => {
   res.json({ message: "Product added to cart" });
 });
 
+router.delete("/userRemoveFromCart/:id", protect, async (req, res) => {
+  const productId = req.params.id;
+  const userId = req.user._id;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "Login to use Cart" });
+
+    if (user.userCart.includes(productId)) {
+      user.userCart.pull(productId); // Remove from wish list
+    } else {
+      return res.status(404).json({ message: "Product not in Cart" });
+    }
+
+    await user.save();
+    res.json({ message: "Cart updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/wishList", protect, async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) return;
+  if (user.wishList.length > 0) {
+    res.json(user.wishList);
+  } else {
+    res.json({ message: "Wish List is empty" });
+  }
+});
+
+router.put("/addToWishList/:id", protect, async (req, res) => {
+  const productId = req.params.id;
+  const userId = req.user._id;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user)
+      return res.status(404).json({ message: "Login to use wishList" });
+
+    // Check if the product is already in the wish list
+    if (user.wishList.includes(productId)) {
+      user.wishList.pull(productId); // Remove from wish list
+    } else {
+      user.wishList.unshift(productId); // Add to wish list
+    }
+
+    await user.save();
+    res.json({ message: "Wish List updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.delete("/removeFromWishList/:id", protect, async (req, res) => {
+  const productId = req.params.id;
+  const userId = req.user._id;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user)
+      return res.status(404).json({ message: "Login to use wishList" });
+
+    if (user.wishList.includes(productId)) {
+      user.wishList.pull(productId); // Remove from wish list
+    } else {
+      return res.status(404).json({ message: "Product not in wish list" });
+    }
+
+    await user.save();
+    res.json({ message: "Wish List updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 export default router;

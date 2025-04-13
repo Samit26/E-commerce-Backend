@@ -9,7 +9,8 @@ const productSchema = new mongoose.Schema({
   images: { type: [String] }, // Array of image URLs
   sales: { type: Number, default: 0 }, // Number of times purchased
   views: { type: Number, default: 0 }, // Number of times viewed
-  discountPrice: { type: Number, default: 0 }, // Discount percentage
+  discountPrice: { type: Number, default: 0 },
+  discountPricePercent: { type: Number, default: 0 }, // Discount percentage
   rating: {
     average: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },

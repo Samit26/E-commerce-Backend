@@ -18,6 +18,7 @@ router.post(
       pinCode,
       userRecentOrder,
       keepShoppingFor,
+      wishList,
       userCart,
     } = req.body;
 
@@ -38,6 +39,7 @@ router.post(
       userRecentOrder,
       keepShoppingFor,
       userCart,
+      wishList,
       password,
     });
 
