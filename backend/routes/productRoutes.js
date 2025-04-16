@@ -309,11 +309,18 @@ router.delete("/userRemoveFromCart/:id", protect, async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "Login to use Cart" });
 
-    if (user.userCart.includes(productId)) {
-      user.userCart.pull(productId); // Remove from wish list
-    } else {
+    const existing = user.userCart.find(
+      (item) => item.product.toString() === productId.toString()
+    );
+
+    if (!existing) {
       return res.status(404).json({ message: "Product not in Cart" });
     }
+
+    // Remove the item
+    user.userCart = user.userCart.filter(
+      (item) => item.product.toString() !== productId.toString()
+    );
 
     await user.save();
     res.json({ message: "Cart updated successfully" });
