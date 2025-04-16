@@ -9,13 +9,13 @@ const updateUserCart = async (userId, productId) => {
     const user = await User.findById(userId);
     if (!user) return;
 
-    if (user.userCart.includes(productId)) {
-      user.userCart.pull(productId);
-    }
-    user.userCart.unshift(productId);
-
-    if (user.userCart.length > 5) {
-      user.userCart.pop();
+    const cartItem = user.userCart.find(
+      (item) => item.product.toString() === productId.toString()
+    );
+    if (cartItem) {
+      cartItem.quantity += 1;
+    } else {
+      user.userCart.unshift({ product: productId, quantity: 1 });
     }
 
     await user.save();

@@ -10,7 +10,12 @@ const userSchema = new mongoose.Schema({
   pinCode: { type: Number, required: true },
   userRecentOrder: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
   keepShoppingFor: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
-  userCart: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
+  userCart: [
+    {
+      product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+      quantity: { type: Number, default: 1 },
+    },
+  ],
   wishList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   password: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
